@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import authService from "../services/authService";
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, onLogin  }) {
   const [email, setEmail]     = useState("");
   const [senha, setSenha]     = useState("");
   const [erro, setErro]       = useState("");

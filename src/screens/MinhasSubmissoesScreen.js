@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
 import SubmissaoCard from '../components/SubmissaoCard'; 
-import colors from '../theme/colors'; 
+import { colors } from '../theme/colors';
 
 import api from '../services/api'; 
 
