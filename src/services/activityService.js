@@ -14,21 +14,19 @@ import api from './api';
 const ActivityService = {
   // ── CATEGORIAS ──────────────────────────────────────────
   getCategorias() {
-    return api.get('/categorias');
+    return api.get('/categorias').then(r => r.data);
   },
 
   getCategoriasByCurso(cursoId) {
-    return api.get(`/categorias?cursoId=${cursoId}`);
+    return api.get(`/categorias?cursoId=${cursoId}`).then(r => r.data);
   },
 
-  // ── CURSOS ───────────────────────────────────────────────
   getCursos() {
-    return api.get('/cursos');
+    return api.get('/cursos').then(r => r.data);
   },
 
-  // ── SUBMISSÕES ───────────────────────────────────────────
   getSubmissoesByAluno(alunoId) {
-    return api.get(`/submissoes?alunoId=${alunoId}`);
+    return api.get(`/submissoes?alunoId=${alunoId}`).then(r => r.data);
   },
 
   /**

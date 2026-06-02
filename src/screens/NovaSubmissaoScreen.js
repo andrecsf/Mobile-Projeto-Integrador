@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import ActivityService from '../services/activityService';
 import { colors, shadows } from '../theme/colors';
+import authStore from '../store/authStore';
 
 // ─── Select customizado ────────────────────────────────────
 const SelectField = ({ placeholder, value, options, onSelect, loading, disabled, error }) => {
@@ -192,7 +193,7 @@ export default function NovaSubmissaoScreen() {
     setSubmitting(true);
     try {
       await ActivityService.inserirSubmissao({
-        alunoId:    1, // TODO: substituir pelo id do aluno logado via authStore
+        alunoId: authStore.getUser().id, // TODO: substituir pelo id do aluno logado via authStore
         categoriaId: form.categoriaId,
         cursoId:    form.cursoId,
         fileUri:    arquivo.uri,
