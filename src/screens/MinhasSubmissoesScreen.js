@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
 import SubmissaoCard from '../components/SubmissaoCard'; 
 import { colors } from '../theme/colors';
-
-import api from '../services/api'; 
+import api from '../services/api';
+import authStore from '../store/authStore';
 
 export default function MinhasSubmissoesScreen({ navigation }) {
   const [submissoes, setSubmissoes] = useState([]);
@@ -12,9 +12,18 @@ export default function MinhasSubmissoesScreen({ navigation }) {
   const buscarSubmissoes = async () => {
     try {
       setLoading(true);
-      
-      const response = await api.get('/submissoes'); 
-      
+
+      const user = authStore.getUser();
+      const alunoId = user?.id;
+
+      if (!alunoId) {
+        Alert.alert("Sessão inválida", "Não foi possível identificar o usuário. Faça login novamente.");
+        return;
+      }
+
+      // Usa o endpoint dedicado: GET /submissoes/aluno/{alunoId}
+      const response = await api.get(`/submissoes/aluno/${alunoId}`);
+
       setSubmissoes(response.data);
     } catch (error) {
       console.error(error);
@@ -54,11 +63,13 @@ export default function MinhasSubmissoesScreen({ navigation }) {
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
             <SubmissaoCard 
-              titulo={item.titulo}
-              horas={item.horas}
-              categoria={item.categoria}
+              titulo={item.nomeAluno}
+              horas={item.horasAproveitadas}
+              categoria={item.nomeCategoria}
               status={item.status}
-              data={item.data}
+              data={item.dataEnvio}
+              observacao={item.observacaoCoordenador}
+              curso={item.nomeCurso}
             />
           )}
           ListEmptyComponent={
