@@ -96,14 +96,27 @@ export default function NovaSubmissaoScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [sucesso, setSucesso] = useState(false);
 
+  // ── BUSCA DE CURSOS OTIMIZADA ──
   useEffect(() => {
     const fetchCursos = async () => {
       setLoadingCursos(true);
       try {
-        const data = await ActivityService.getCursos();
-        setCursos((data || []).map(c => ({ id: c.id, label: c.nome })));
-      } catch {
-        Alert.alert('Erro', 'Não foi possível carregar os cursos.');
+        const user = authStore.getUser();
+        if (!user || !user.id) {
+          Alert.alert('Erro', 'Sessão inválida. Inicie sessão novamente.');
+          return;
+        }
+
+        const cursosDoAluno = await ActivityService.getCursosByAluno(user.id);
+        
+        setCursos((cursosDoAluno || []).map(c => ({ 
+          id: c.id, 
+          label: c.nome 
+        })));
+
+      } catch (error) {
+        console.log("ERRO BUSCA CURSOS:", error.response ? error.response.status : error.message);
+        Alert.alert('Erro', 'Não foi possível carregar os seus cursos.');
       } finally {
         setLoadingCursos(false);
       }
@@ -137,13 +150,13 @@ export default function NovaSubmissaoScreen() {
     if (tipo === 'camera') {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'Permita o acesso à câmera nas configurações.');
+        Alert.alert('Permissão negada', 'Permita o acesso à câmara nas definições.');
         return false;
       }
     } else {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'Permita o acesso à galeria nas configurações.');
+        Alert.alert('Permissão negada', 'Permita o acesso à galeria nas definições.');
         return false;
       }
     }
@@ -177,12 +190,12 @@ export default function NovaSubmissaoScreen() {
     const e = {};
     if (!form.cursoId)            e.cursoId      = 'Selecione o curso.';
     if (!form.categoriaId)        e.categoriaId  = 'Selecione a categoria.';
-    if (!form.nomeAluno.trim())   e.nomeAluno    = 'Informe o nome do aluno.';
-    if (!form.nomeEvento.trim())  e.nomeEvento   = 'Informe o nome do evento ou curso.';
-    if (!form.cargaHoraria.trim()) e.cargaHoraria = 'Informe a carga horária.';
+    if (!form.nomeAluno.trim())   e.nomeAluno    = 'Introduza o nome do aluno.';
+    if (!form.nomeEvento.trim())  e.nomeEvento   = 'Introduza o nome do evento ou curso.';
+    if (!form.cargaHoraria.trim()) e.cargaHoraria = 'Introduza a carga horária.';
     else if (isNaN(Number(form.cargaHoraria)) || Number(form.cargaHoraria) <= 0)
       e.cargaHoraria = 'Deve ser um número positivo.';
-    if (!form.dataConclusao.trim()) e.dataConclusao = 'Informe a data de conclusão.';
+    if (!form.dataConclusao.trim()) e.dataConclusao = 'Introduza a data de conclusão.';
     if (!arquivo)                 e.arquivo      = 'Anexe o certificado.';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -193,7 +206,7 @@ export default function NovaSubmissaoScreen() {
     setSubmitting(true);
     try {
       await ActivityService.inserirSubmissao({
-        alunoId: authStore.getUser().id, // TODO: substituir pelo id do aluno logado via authStore
+        alunoId: authStore.getUser().id,
         categoriaId: form.categoriaId,
         cursoId:    form.cursoId,
         fileUri:    arquivo.uri,
@@ -221,7 +234,7 @@ export default function NovaSubmissaoScreen() {
     setSucesso(false);
   };
 
-  // ── Tela de sucesso ───────────────────────────────────────
+  // ── Ecrã de sucesso ───────────────────────────────────────
   if (sucesso) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -231,7 +244,7 @@ export default function NovaSubmissaoScreen() {
           </View>
           <Text style={styles.successTitle}>Certificado enviado!</Text>
           <Text style={styles.successSubtitle}>
-            Sua submissão foi registrada e aguarda análise do coordenador.
+            A sua submissão foi registada e aguarda análise do coordenador.
           </Text>
           <TouchableOpacity style={styles.btnPrimary} onPress={resetar}>
             <Text style={styles.btnPrimaryText}>Enviar outro certificado</Text>
@@ -347,7 +360,7 @@ export default function NovaSubmissaoScreen() {
           {/* ── Card 3: Comprovante ─── */}
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Comprovante</Text>
-            <Text style={styles.sectionSubtitle}>Tire uma foto ou selecione da galeria</Text>
+            <Text style={styles.sectionSubtitle}>Tire uma fotografia ou selecione da galeria</Text>
 
             {arquivo ? (
               <View style={styles.previewContainer}>
@@ -365,7 +378,7 @@ export default function NovaSubmissaoScreen() {
             ) : (
               <View style={styles.uploadArea}>
                 <Text style={{ fontSize: 32, marginBottom: 8 }}>📎</Text>
-                <Text style={styles.uploadHint}>Nenhum arquivo selecionado</Text>
+                <Text style={styles.uploadHint}>Nenhum ficheiro selecionado</Text>
                 {errors.arquivo && (
                   <Text style={[styles.errorText, { textAlign: 'center', marginBottom: 8 }]}>
                     {errors.arquivo}
@@ -376,7 +389,7 @@ export default function NovaSubmissaoScreen() {
 
             <View style={styles.uploadButtons}>
               <TouchableOpacity style={styles.btnCamera} onPress={abrirCamera} activeOpacity={0.7}>
-                <Text style={styles.btnCameraText}>📷  Câmera</Text>
+                <Text style={styles.btnCameraText}>📷  Câmara</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnGaleria} onPress={abrirGaleria} activeOpacity={0.7}>
                 <Text style={styles.btnGaleriaText}>🖼️  Galeria</Text>
