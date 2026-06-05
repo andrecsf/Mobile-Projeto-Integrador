@@ -9,7 +9,6 @@ import {
   Dimensions,
   Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, shadows } from '../theme/colors';
 import authStore from '../store/authStore';
@@ -22,7 +21,6 @@ const STROKE = 18;
 const RADIUS = (DONUT_SIZE - STROKE) / 2;
 const CIRCUNFERENCIA = 2 * Math.PI * RADIUS;
 
-// ── Gráfico de rosca SVG-less usando View circular ────────────────────────────
 function DonutChart({ progresso, horasFeitas, horasMeta }) {
   const anim = React.useRef(new Animated.Value(0)).current;
 
@@ -39,27 +37,20 @@ function DonutChart({ progresso, horasFeitas, horasMeta }) {
 
   return (
     <View style={donutStyles.wrapper}>
-      {/* Trilha de fundo */}
       <View style={donutStyles.track} />
-
-      {/* Arco de progresso via rotação de meias-circunferências */}
       <View style={donutStyles.arcContainer}>
-        {/* Metade esquerda */}
         <View style={[donutStyles.halfCircle, donutStyles.left]}>
           <View
             style={[
               donutStyles.halfCircleInner,
               donutStyles.leftInner,
               {
-                transform: [
-                  { rotate: graus > 180 ? '180deg' : `${graus}deg` },
-                ],
+                transform: [{ rotate: graus > 180 ? '180deg' : `${graus}deg` }],
                 backgroundColor: colors.accent,
               },
             ]}
           />
         </View>
-        {/* Metade direita — visível só se > 50% */}
         {graus > 180 && (
           <View style={[donutStyles.halfCircle, donutStyles.right]}>
             <View
@@ -75,8 +66,6 @@ function DonutChart({ progresso, horasFeitas, horasMeta }) {
           </View>
         )}
       </View>
-
-      {/* Buraco central */}
       <View style={donutStyles.hole}>
         <Text style={donutStyles.horasFeitas}>{horasFeitas}h</Text>
         <Text style={donutStyles.horasLabel}>de {horasMeta}h</Text>
@@ -125,13 +114,11 @@ const donutStyles = StyleSheet.create({
     left: 0,
     borderLeftColor: colors.accent,
     borderBottomColor: colors.accent,
-    transformOrigin: `${DONUT_SIZE / 2}px ${DONUT_SIZE / 2}px`,
   },
   rightInner: {
     right: 0,
     borderRightColor: colors.accent,
     borderTopColor: colors.accent,
-    transformOrigin: `${DONUT_SIZE / 2}px ${DONUT_SIZE / 2}px`,
   },
   hole: {
     width: DONUT_SIZE - STROKE * 2 - 8,
@@ -154,7 +141,6 @@ const donutStyles = StyleSheet.create({
   },
 });
 
-// ── Barra de progresso animada ────────────────────────────────────────────────
 function BarraProgresso({ progresso }) {
   const anim = React.useRef(new Animated.Value(0)).current;
 
@@ -199,7 +185,6 @@ const barStyles = StyleSheet.create({
   },
 });
 
-// ── Chip de status rápido ─────────────────────────────────────────────────────
 function ChipStatus({ status, count }) {
   const cores = {
     PENDENTE:  { bg: colors.warningLight, text: colors.warning },
@@ -227,7 +212,6 @@ const chipStyles = StyleSheet.create({
   label: { fontSize: 10, fontWeight: '600', marginTop: 2, letterSpacing: 0.3 },
 });
 
-// ── Tela principal ────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }) {
   const [aluno, setAluno]           = useState(null);
   const [cursos, setCursos]         = useState([]);
@@ -255,9 +239,12 @@ export default function HomeScreen({ navigation }) {
     }
   }, [user?.id]);
 
-  useFocusEffect(carregar);
+  useFocusEffect(
+    React.useCallback(() => {
+      carregar();
+    }, [carregar])
+  );
 
-  // ── Métricas derivadas ──────────────────────────────────────────────────────
   const horasFeitas = aluno?.horasAcumuladas ?? 0;
   const horasMeta   = cursos.length > 0
     ? Math.max(...cursos.map(c => c.cargaHorariaMax ?? 0))
@@ -275,31 +262,27 @@ export default function HomeScreen({ navigation }) {
   );
 
   const ultimas3 = submissoes.slice(0, 3);
-
   const primeiroNome = (aluno?.name || user?.email || 'Aluno').split(' ')[0];
-
-  // ── Hora do dia ────────────────────────────────────────────────────────────
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={styles.loadingText}>Carregando seu painel...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Header ── */}
         <View style={styles.header}>
           <View>
             <Text style={styles.saudacao}>{saudacao},</Text>
@@ -312,7 +295,6 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* ── Card de progresso ── */}
         <View style={[styles.card, styles.progressoCard]}>
           <Text style={styles.sectionTitle}>Horas Complementares</Text>
           <Text style={styles.sectionSubtitle}>
@@ -320,16 +302,8 @@ export default function HomeScreen({ navigation }) {
               ? '🎉 Meta atingida! Parabéns!'
               : `Faltam ${Math.max(horasMeta - horasFeitas, 0)}h para completar`}
           </Text>
-
           <View style={styles.progressoRow}>
-            {/* Rosca */}
-            <DonutChart
-              progresso={progresso}
-              horasFeitas={horasFeitas}
-              horasMeta={horasMeta}
-            />
-
-            {/* Detalhes ao lado */}
+            <DonutChart progresso={progresso} horasFeitas={horasFeitas} horasMeta={horasMeta} />
             <View style={styles.progressoDetalhes}>
               <View style={styles.metaItem}>
                 <Text style={styles.metaValor}>{pctTexto}%</Text>
@@ -342,15 +316,11 @@ export default function HomeScreen({ navigation }) {
               </View>
               <View style={styles.separador} />
               <View style={styles.metaItem}>
-                <Text style={[styles.metaValor, { color: colors.success }]}>
-                  {contagem.APROVADO}
-                </Text>
+                <Text style={[styles.metaValor, { color: colors.success }]}>{contagem.APROVADO}</Text>
                 <Text style={styles.metaLabel}>aprovados</Text>
               </View>
             </View>
           </View>
-
-          {/* Barra */}
           <View style={styles.barraContainer}>
             <View style={styles.barraLabels}>
               <Text style={styles.barraLabelText}>0h</Text>
@@ -360,7 +330,6 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* ── Chips de status ── */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Resumo de Envios</Text>
           <View style={styles.chipsRow}>
@@ -370,28 +339,22 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* ── Últimas submissões ── */}
         <View style={styles.card}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Últimos Certificados</Text>
             {submissoes.length > 3 && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('MinhasSubmissoes')}
-              >
+              <TouchableOpacity onPress={() => navigation.navigate('MinhasSubmissoes')}>
                 <Text style={styles.verTodos}>Ver todos</Text>
               </TouchableOpacity>
             )}
           </View>
-
           {ultimas3.length === 0 ? (
             <View style={styles.vazioContainer}>
               <Text style={styles.vazioIcone}>📂</Text>
-              <Text style={styles.vazioTexto}>
-                Nenhum certificado enviado ainda.
-              </Text>
+              <Text style={styles.vazioTexto}>Nenhum certificado enviado ainda.</Text>
               <TouchableOpacity
                 style={styles.btnEnviar}
-                onPress={() => navigation.navigate('NovaSubmissaoScreen')}
+                onPress={() => navigation.navigate('NovaSubmissao')}
               >
                 <Text style={styles.btnEnviarText}>Enviar meu primeiro certificado</Text>
               </TouchableOpacity>
@@ -414,18 +377,15 @@ export default function HomeScreen({ navigation }) {
 
         <View style={{ height: 24 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea:   { flex: 1, backgroundColor: colors.bg },
   scroll:     { padding: 20 },
-
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   loadingText:      { marginTop: 12, color: colors.textSecondary, fontSize: 14 },
-
-  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -443,8 +403,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarLetra: { color: colors.white, fontSize: 18, fontWeight: '700' },
-
-  // Cards
   card: {
     backgroundColor: colors.card,
     borderRadius: 16,
@@ -455,7 +413,6 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   progressoCard: { paddingBottom: 16 },
-
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -465,8 +422,6 @@ const styles = StyleSheet.create({
   sectionTitle:    { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   sectionSubtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 2, marginBottom: 16 },
   verTodos:        { fontSize: 13, color: colors.accent, fontWeight: '600' },
-
-  // Progresso
   progressoRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -477,15 +432,10 @@ const styles = StyleSheet.create({
   metaValor: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.5 },
   metaLabel: { fontSize: 10, color: colors.textMuted, marginTop: 1, fontWeight: '500' },
   separador: { height: 1, backgroundColor: colors.border, marginVertical: 10 },
-
   barraContainer: { marginTop: 16 },
   barraLabels:    { flexDirection: 'row', justifyContent: 'space-between' },
   barraLabelText: { fontSize: 11, color: colors.textMuted },
-
-  // Chips
   chipsRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
-
-  // Vazio
   vazioContainer: { alignItems: 'center', paddingVertical: 20 },
   vazioIcone:     { fontSize: 36, marginBottom: 8 },
   vazioTexto:     { fontSize: 14, color: colors.textMuted, marginBottom: 16 },
@@ -497,4 +447,3 @@ const styles = StyleSheet.create({
   },
   btnEnviarText: { color: colors.white, fontSize: 13, fontWeight: '700' },
 });
-

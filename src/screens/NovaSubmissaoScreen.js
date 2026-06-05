@@ -12,7 +12,6 @@ import {
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import ActivityService from '../services/activityService';
 import { colors, shadows } from '../theme/colors';
@@ -237,7 +236,7 @@ export default function NovaSubmissaoScreen() {
   // ── Ecrã de sucesso ───────────────────────────────────────
   if (sucesso) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <View style={styles.successContainer}>
           <View style={styles.successIcon}>
             <Text style={{ fontSize: 38, color: colors.success }}>✓</Text>
@@ -250,12 +249,12 @@ export default function NovaSubmissaoScreen() {
             <Text style={styles.btnPrimaryText}>Enviar outro certificado</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
@@ -413,7 +412,7 @@ export default function NovaSubmissaoScreen() {
           <View style={{ height: 32 }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 

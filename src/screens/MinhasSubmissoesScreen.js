@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
-import SubmissaoCard from '../components/SubmissaoCard'; 
-import { colors } from '../theme/colors';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import SubmissaoCard from '../components/SubmissaoCard';
+import { colors, shadows } from '../theme/colors';
 import api from '../services/api';
 import authStore from '../store/authStore';
 
@@ -12,7 +12,6 @@ export default function MinhasSubmissoesScreen({ navigation }) {
   const buscarSubmissoes = async () => {
     try {
       setLoading(true);
-
       const user = authStore.getUser();
       const alunoId = user?.id;
 
@@ -21,16 +20,11 @@ export default function MinhasSubmissoesScreen({ navigation }) {
         return;
       }
 
-      // Usa o endpoint dedicado: GET /submissoes/aluno/{alunoId}
       const response = await api.get(`/submissoes/aluno/${alunoId}`);
-
       setSubmissoes(response.data);
     } catch (error) {
       console.error(error);
-      Alert.alert(
-        "Erro de Conexão",
-        "Não foi possível carregar as submissões. Verifique se o servidor no Render está ativo."
-      );
+      Alert.alert("Erro de Conexão", "Não foi possível carregar as submissões. Verifique se o servidor está ativo.");
     } finally {
       setLoading(false);
     }
@@ -40,12 +34,11 @@ export default function MinhasSubmissoesScreen({ navigation }) {
     const unsubscribe = navigation.addListener('focus', () => {
       buscarSubmissoes();
     });
-
     return unsubscribe;
   }, [navigation]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Minhas Submissões</Text>
         <Text style={styles.subtitle}>Acompanhe o status dos seus certificados</Text>
@@ -53,8 +46,8 @@ export default function MinhasSubmissoesScreen({ navigation }) {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors?.primary || '#3498db'} />
-          <Text style={styles.loadingText}>Conectando ao servidor...</Text>
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={styles.loadingText}>Carregando...</Text>
         </View>
       ) : (
         <FlatList
@@ -62,7 +55,7 @@ export default function MinhasSubmissoesScreen({ navigation }) {
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <SubmissaoCard 
+            <SubmissaoCard
               titulo={item.nomeAluno}
               horas={item.horasAproveitadas}
               categoria={item.nomeCategoria}
@@ -80,25 +73,36 @@ export default function MinhasSubmissoesScreen({ navigation }) {
         />
       )}
 
-      <TouchableOpacity 
-        style={styles.fab} 
+      <TouchableOpacity
+        style={styles.fab}
         onPress={() => navigation.navigate('NovaSubmissao')}
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors?.background || '#121212' },
-  header: { padding: 20, borderBottomWidth: 1, borderColor: '#222' },
-  title: { fontSize: 24, fontWeight: 'bold', color: colors?.text || '#fff' },
-  subtitle: { fontSize: 14, color: '#aaa', marginTop: 4 },
-  list: { padding: 20, paddingBottom: 100 },
+  container:        { flex: 1, backgroundColor: colors.bg },
+  header:           { padding: 20, borderBottomWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
+  title:            { fontSize: 24, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.5 },
+  subtitle:         { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+  list:             { padding: 20, paddingBottom: 120 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#aaa', marginTop: 10, fontSize: 14 },
-  emptyText: { color: '#666', textAlign: 'center', marginTop: 40, fontSize: 16 },
-  fab: { position: 'absolute', right: 24, bottom: 24, backgroundColor: colors?.primary || '#3498db', width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', elevation: 5 },
-  fabText: { color: '#fff', fontSize: 28, fontWeight: 'bold' }
+  loadingText:      { color: colors.textMuted, marginTop: 10, fontSize: 14 },
+  emptyText:        { color: colors.textMuted, textAlign: 'center', marginTop: 40, fontSize: 16 },
+  fab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 24,
+    backgroundColor: colors.accent,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.md,
+  },
+  fabText: { color: colors.white, fontSize: 28, fontWeight: 'bold' },
 });
