@@ -121,7 +121,7 @@ const ic = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  plus:       { fontSize: 26, lineHeight: 30, color: colors.accentLight, fontWeight: '300' },
+  plus:       { fontSize: 26, lineHeight: 30, color: colors.accent, fontWeight: '300' },
   plusActive: { color: colors.white },
 });
 
@@ -166,19 +166,19 @@ function TabNavigator() {
         }}
       />
       <Tab.Screen
-        name="MinhasSubmissoes"
-        component={MinhasSubmissoesScreen}
-        options={{
-          tabBarLabel: ({ focused }) => <TabLabel label="Submissões" focused={focused} />,
-          tabBarIcon: ({ focused }) => <IconList focused={focused} />,
-        }}
-      />
-      <Tab.Screen
         name="NovaSubmissaoTab"
         component={NovaSubmissaoScreen}
         options={{
           tabBarLabel: ({ focused }) => <TabLabel label="Novo" focused={focused} />,
           tabBarIcon: ({ focused }) => <IconPlus focused={focused} />,
+        }}
+      />
+      <Tab.Screen
+        name="MinhasSubmissoes"
+        component={MinhasSubmissoesScreen}
+        options={{
+          tabBarLabel: ({ focused }) => <TabLabel label="Submissões" focused={focused} />,
+          tabBarIcon: ({ focused }) => <IconList focused={focused} />,
         }}
       />
     </Tab.Navigator>
