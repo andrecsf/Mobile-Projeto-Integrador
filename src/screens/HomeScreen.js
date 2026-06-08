@@ -460,8 +460,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  saudacao: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-  nome:     { fontSize: 24, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.5, marginTop: 2 },
+  saudacao: { fontSize: 13, color: '#ffffff', fontWeight: '500' },
+  nome:     { fontSize: 24, fontWeight: '800', color: '#ffffff', letterSpacing: -0.5, marginTop: 2 },
   avatarCircle: {
     width: 44,
     height: 44,

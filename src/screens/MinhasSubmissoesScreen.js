@@ -294,12 +294,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderBottomWidth: 0,
+    
+    backgroundColor: colors.bg,
   },
-  title:    { fontSize: 24, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.5 },
-  subtitle: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+  title:    { fontSize: 24, fontWeight: '800', color: '#ffffff', letterSpacing: -0.5 },
+  subtitle: { fontSize: 14, color: '#ffffff', marginTop: 4, opacity: 0.7 },
 
   toolbar: {
     flexDirection: 'row',
@@ -311,8 +311,8 @@ const styles = StyleSheet.create({
 
   filterBtn: {
     width: 38, height: 38, borderRadius: 10,
-    backgroundColor: colors.card,
-    borderWidth: 1.5, borderColor: colors.border,
+    backgroundColor: colors.bg,
+    borderWidth: 1.5, 
     alignItems: 'center', justifyContent: 'center',
     ...shadows.sm,
   },
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
 const mStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(10,22,40,0.45)' },
   sheet: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.bg,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
@@ -375,7 +375,7 @@ const mStyles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 12, paddingHorizontal: 14,
     borderRadius: 14, borderWidth: 1.5,
-    borderColor: colors.border, marginBottom: 8,
+     marginBottom: 8,
     backgroundColor: colors.inputBg, gap: 10,
   },
   emoji:       { fontSize: 16 },
