@@ -264,7 +264,47 @@ export default function NovaSubmissaoScreen() {
             <Text style={styles.headerSubtitle}>Preencha os dados e anexe o comprovante</Text>
           </View>
 
-          {/* ── Card 1: Identificação ─── */}
+          {/* ── Card 1: Comprovante ─── */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Comprovante</Text>
+            <Text style={styles.sectionSubtitle}>Tire uma fotografia ou selecione da galeria</Text>
+
+            {arquivo ? (
+              <View style={styles.previewContainer}>
+                <Image source={{ uri: arquivo.uri }} style={styles.previewImage} resizeMode="cover" />
+                <View style={styles.previewBar}>
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text style={styles.previewName} numberOfLines={1}>{arquivo.name}</Text>
+                    <Text style={styles.previewType}>{arquivo.type}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.removeBtn} onPress={() => setArquivo(null)}>
+                    <Text style={styles.removeBtnText}>✕ Remover</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.uploadArea}>
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>📎</Text>
+                <Text style={styles.uploadHint}>Nenhum ficheiro selecionado</Text>
+                {errors.arquivo && (
+                  <Text style={[styles.errorText, { textAlign: 'center', marginBottom: 8 }]}>
+                    {errors.arquivo}
+                  </Text>
+                )}
+              </View>
+            )}
+
+            <View style={styles.uploadButtons}>
+              <TouchableOpacity style={styles.btnCamera} onPress={abrirCamera} activeOpacity={0.7}>
+                <Text style={styles.btnCameraText}>📷  Câmara</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.btnGaleria} onPress={abrirGaleria} activeOpacity={0.7}>
+                <Text style={styles.btnGaleriaText}>🖼️  Galeria</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* ── Card 2: Identificação ─── */}
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Identificação</Text>
 
@@ -292,7 +332,7 @@ export default function NovaSubmissaoScreen() {
             </FormField>
           </View>
 
-          {/* ── Card 2: Dados do certificado ─── */}
+          {/* ── Card 3: Dados do certificado ─── */}
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Dados do Certificado</Text>
 
@@ -353,46 +393,6 @@ export default function NovaSubmissaoScreen() {
                   />
                 </FormField>
               </View>
-            </View>
-          </View>
-
-          {/* ── Card 3: Comprovante ─── */}
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Comprovante</Text>
-            <Text style={styles.sectionSubtitle}>Tire uma fotografia ou selecione da galeria</Text>
-
-            {arquivo ? (
-              <View style={styles.previewContainer}>
-                <Image source={{ uri: arquivo.uri }} style={styles.previewImage} resizeMode="cover" />
-                <View style={styles.previewBar}>
-                  <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text style={styles.previewName} numberOfLines={1}>{arquivo.name}</Text>
-                    <Text style={styles.previewType}>{arquivo.type}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.removeBtn} onPress={() => setArquivo(null)}>
-                    <Text style={styles.removeBtnText}>✕ Remover</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.uploadArea}>
-                <Text style={{ fontSize: 32, marginBottom: 8 }}>📎</Text>
-                <Text style={styles.uploadHint}>Nenhum ficheiro selecionado</Text>
-                {errors.arquivo && (
-                  <Text style={[styles.errorText, { textAlign: 'center', marginBottom: 8 }]}>
-                    {errors.arquivo}
-                  </Text>
-                )}
-              </View>
-            )}
-
-            <View style={styles.uploadButtons}>
-              <TouchableOpacity style={styles.btnCamera} onPress={abrirCamera} activeOpacity={0.7}>
-                <Text style={styles.btnCameraText}>📷  Câmara</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnGaleria} onPress={abrirGaleria} activeOpacity={0.7}>
-                <Text style={styles.btnGaleriaText}>🖼️  Galeria</Text>
-              </TouchableOpacity>
             </View>
           </View>
 
