@@ -15,6 +15,7 @@ import { colors, shadows } from '../theme/colors';
 import authStore from '../store/authStore';
 import ActivityService from '../services/activityService';
 import SubmissaoCard from '../components/SubmissaoCard';
+import CertificadoModal from '../components/CertificadoModal';
 
 const { width } = Dimensions.get('window');
 const DONUT_SIZE = 160;
@@ -256,6 +257,7 @@ export default function HomeScreen({ navigation, onLogout }) {
   const [cursos, setCursos]         = useState([]);
   const [submissoes, setSubmissoes] = useState([]);
   const [loading, setLoading]       = useState(true);
+  const [certSelecionado, setCertSelecionado] = useState(null);
 
   const user = authStore.getUser();
 
@@ -421,19 +423,25 @@ export default function HomeScreen({ navigation, onLogout }) {
             </View>
           ) : (
             ultimas3.map(item => (
-              <SubmissaoCard
-                key={item.id}
-                titulo={item.nomeAluno}
-                horas={item.horasAproveitadas}
-                categoria={item.nomeCategoria}
-                status={item.status}
-                data={item.dataEnvio}
-                observacao={item.observacaoCoordenador}
-                curso={item.nomeCurso}
-              />
+              <TouchableOpacity key={item.id} onPress={() => setCertSelecionado(item)} activeOpacity={0.8}>
+                <SubmissaoCard
+                  titulo={item.nomeAluno}
+                  horas={item.horasAproveitadas}
+                  categoria={item.nomeCategoria}
+                  status={item.status}
+                  data={item.dataEnvio}
+                  observacao={item.observacaoCoordenador}
+                  curso={item.nomeCurso}
+                />
+              </TouchableOpacity>
             ))
           )}
         </View>
+
+        <CertificadoModal
+          certificado={certSelecionado}
+          onClose={() => setCertSelecionado(null)}
+        />
 
         <View style={{ height: 24 }} />
       </ScrollView>

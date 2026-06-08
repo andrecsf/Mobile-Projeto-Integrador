@@ -7,6 +7,7 @@ import SubmissaoCard from '../components/SubmissaoCard';
 import { colors, shadows } from '../theme/colors';
 import api from '../services/api';
 import authStore from '../store/authStore';
+import CertificadoModal from '../components/CertificadoModal';
 
 const STATUS_OPTIONS = ['Todos', 'PENDENTE', 'APROVADO', 'REJEITADO'];
 const STATUS_META = {
@@ -74,6 +75,7 @@ export default function MinhasSubmissoesScreen({ navigation }) {
   const [submissoes, setSubmissoes]     = useState([]);
   const [loading, setLoading]           = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [certSelecionado, setCertSelecionado] = useState(null);
 
   const [filtroStatus, setFiltroStatus] = useState('Todos');
   const [filtroCat,    setFiltroCat]    = useState('Todas');
@@ -204,15 +206,17 @@ export default function MinhasSubmissoesScreen({ navigation }) {
           contentContainerStyle={styles.list}
           ListHeaderComponent={<ListToolbar />}
           renderItem={({ item }) => (
-            <SubmissaoCard
-              titulo={item.nomeAluno}
-              horas={item.horasAproveitadas}
-              categoria={item.nomeCategoria}
-              status={item.status}
-              data={item.dataEnvio}
-              observacao={item.observacaoCoordenador}
-              curso={item.nomeCurso}
-            />
+            <TouchableOpacity onPress={() => setCertSelecionado(item)} activeOpacity={0.8}>
+              <SubmissaoCard
+                titulo={item.nomeAluno}
+                horas={item.horasAproveitadas}
+                categoria={item.nomeCategoria}
+                status={item.status}
+                data={item.dataEnvio}
+                observacao={item.observacaoCoordenador}
+                curso={item.nomeCurso}
+              />
+            </TouchableOpacity>
           )}
           ListEmptyComponent={
             <Text style={styles.emptyText}>
@@ -276,6 +280,11 @@ export default function MinhasSubmissoesScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      <CertificadoModal                          
+        certificado={certSelecionado}
+        onClose={() => setCertSelecionado(null)}
+      />
 
     </View>
   );
