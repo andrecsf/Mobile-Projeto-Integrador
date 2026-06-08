@@ -24,7 +24,7 @@ export const colors = {
   dangerLight:  '#fee2e2',
 
   // Superfícies
-  bg:        '#f4f5fb',
+  bg:        '#0f1117',
   card:      '#ffffff',
   inputBg:   '#f5f6fa',
   hover:     '#f0f2fa',
