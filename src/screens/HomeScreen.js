@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Animated,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, shadows } from '../theme/colors';
@@ -212,7 +213,7 @@ const chipStyles = StyleSheet.create({
   label: { fontSize: 10, fontWeight: '600', marginTop: 2, letterSpacing: 0.3 },
 });
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, onLogout }) {
   const [aluno, setAluno]           = useState(null);
   const [cursos, setCursos]         = useState([]);
   const [submissoes, setSubmissoes] = useState([]);
@@ -288,11 +289,31 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.saudacao}>{saudacao},</Text>
             <Text style={styles.nome}>{primeiroNome} 👋</Text>
           </View>
-          <View style={styles.avatarCircle}>
+          <TouchableOpacity
+            style={styles.avatarCircle}
+            onPress={() =>
+              Alert.alert(
+                "Sair da conta",
+                "Tem certeza que deseja sair?",
+                [
+                  { text: "Cancelar", style: "cancel" },
+                  {
+                    text: "Sair",
+                    style: "destructive",
+                    onPress: () => {
+                      authStore.clearSession();
+                      onLogout();
+                    },
+                  },
+                ]
+              )
+            }
+            activeOpacity={0.8}
+          >
             <Text style={styles.avatarLetra}>
               {primeiroNome.charAt(0).toUpperCase()}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         <View style={[styles.card, styles.progressoCard]}>

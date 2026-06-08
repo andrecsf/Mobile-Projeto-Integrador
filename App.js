@@ -14,7 +14,7 @@ export default function App() {
       <NavigationContainer>
         <StatusBar style="dark" translucent backgroundColor="transparent" />
         {logado
-          ? <AppNavigator />
+          ? <AppNavigator onLogout={() => setLogado(false)} />
           : <AuthNavigator onLogin={() => setLogado(true)} />
         }
       </NavigationContainer>

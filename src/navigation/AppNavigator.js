@@ -121,7 +121,7 @@ const ic = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  plus:       { fontSize: 26, lineHeight: 30, color: colors.accentLight, fontWeight: '300' },
+  plus:       { fontSize: 26, lineHeight: 30, color: colors.accent, fontWeight: '300' },
   plusActive: { color: colors.white },
 });
 
@@ -140,7 +140,7 @@ function TabLabel({ label, focused }) {
 }
 
 // ── Tab Navigator ─────────────────────────────────────────────────────────────
-function TabNavigator() {
+function TabNavigator({ onLogout }) {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -159,18 +159,10 @@ function TabNavigator() {
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        children={(props) => <HomeScreen {...props} onLogout={onLogout} />}
         options={{
           tabBarIcon: ({ focused }) => <IconHome focused={focused} />,
           tabBarLabel: ({ focused }) => <TabLabel label="Home" focused={focused} />,
-        }}
-      />
-      <Tab.Screen
-        name="MinhasSubmissoes"
-        component={MinhasSubmissoesScreen}
-        options={{
-          tabBarLabel: ({ focused }) => <TabLabel label="Submissões" focused={focused} />,
-          tabBarIcon: ({ focused }) => <IconList focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -181,15 +173,23 @@ function TabNavigator() {
           tabBarIcon: ({ focused }) => <IconPlus focused={focused} />,
         }}
       />
+      <Tab.Screen
+        name="MinhasSubmissoes"
+        component={MinhasSubmissoesScreen}
+        options={{
+          tabBarLabel: ({ focused }) => <TabLabel label="Submissões" focused={focused} />,
+          tabBarIcon: ({ focused }) => <IconList focused={focused} />,
+        }}
+      />
     </Tab.Navigator>
   );
 }
 
 // ── Stack principal ───────────────────────────────────────────────────────────
-function MainStack() {
+function MainStack({ onLogout }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Tabs" component={TabNavigator} />
+      <Stack.Screen name="Tabs" children={(props) => <TabNavigator {...props} onLogout={onLogout} />} />
       <Stack.Screen
         name="NovaSubmissao"
         component={NovaSubmissaoScreen}
@@ -199,6 +199,6 @@ function MainStack() {
   );
 }
 
-export default function AppNavigator() {
-  return <MainStack />;
+export default function AppNavigator({ onLogout }) {
+  return <MainStack onLogout={onLogout} />;
 }
