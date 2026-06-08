@@ -296,7 +296,7 @@ export default function NovaSubmissaoScreen() {
 
             <View style={styles.uploadButtons}>
               <TouchableOpacity style={styles.btnCamera} onPress={abrirCamera} activeOpacity={0.7}>
-                <Text style={styles.btnCameraText}>📷  Câmara</Text>
+                <Text style={styles.btnCameraText}>📷  Câmera</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnGaleria} onPress={abrirGaleria} activeOpacity={0.7}>
                 <Text style={styles.btnGaleriaText}>🖼️  Galeria</Text>
