@@ -201,6 +201,44 @@ function ChipStatus({ status, count }) {
   );
 }
 
+function LogoBadge() {
+  return (
+    <View style={logoStyles.badge}>
+      <View style={logoStyles.dot} />
+      <Text style={logoStyles.text}>
+        Acad<Text style={{ color: colors.accent }}>Flow</Text>
+      </Text>
+    </View>
+  );
+}
+
+const logoStyles = StyleSheet.create({
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 8,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginBottom: 20,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.accent,
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+});
+
 const chipStyles = StyleSheet.create({
   chip: {
     alignItems: 'center',
@@ -284,6 +322,7 @@ export default function HomeScreen({ navigation, onLogout }) {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
+        <LogoBadge />
         <View style={styles.header}>
           <View>
             <Text style={styles.saudacao}>{saudacao},</Text>
