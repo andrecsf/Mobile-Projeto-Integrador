@@ -1,4 +1,4 @@
- /**
+/**
   * authService.js
   *
   * Responsável por:
@@ -26,7 +26,9 @@
      try {
        const response = await api.post('/auth/login', { email, password });
         const { token, role } = response.data;
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        // Base64url -> Base64 padrao antes do atob (JWT usa '-' e '_')
+        const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(atob(b64));
         authStore.setSession({ token, role, user: { id: payload.userId, email: payload.sub } });
  
        return { token, role };
@@ -47,4 +49,3 @@
  };
  
  export default authService;
- 

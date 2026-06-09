@@ -35,7 +35,7 @@ const ActivityService = {
 
   // ── SUBMISSÕES ──────────────────────────────────────────
   getSubmissoesByAluno(alunoId) {
-    return api.get(`/submissoes?alunoId=${alunoId}`).then(r => r.data);
+    return api.get(`/submissoes/aluno/${alunoId}`).then(r => r.data);
   },
 
   /**
