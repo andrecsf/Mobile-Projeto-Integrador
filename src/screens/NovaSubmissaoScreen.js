@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import ActivityService from '../services/activityService';
+import OcrService from '../services/ocrService'; // ← NOVO
 import { colors, shadows } from '../theme/colors';
 import authStore from '../store/authStore';
 
@@ -94,6 +95,7 @@ export default function NovaSubmissaoScreen() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [sucesso, setSucesso] = useState(false);
+  const [ocrLoading, setOcrLoading] = useState(false); // ← NOVO
 
   // ── BUSCA DE CURSOS OTIMIZADA ──
   useEffect(() => {
@@ -162,6 +164,27 @@ export default function NovaSubmissaoScreen() {
     return true;
   };
 
+  // ── OCR ── NOVO ──────────────────────────────────────────
+  const rodarOcr = async (asset) => {
+    setOcrLoading(true);
+    try {
+      const dados = await OcrService.lerCertificado({
+        uri:  asset.uri,
+        name: asset.fileName || asset.name || `cert_${Date.now()}.jpg`,
+        type: asset.mimeType || asset.type || 'image/jpeg',
+      });
+      if (dados.nomeAlunoOcr)     setField('nomeAluno',     dados.nomeAlunoOcr);
+      if (dados.nomeCursoOcr)     setField('nomeEvento',    dados.nomeCursoOcr);
+      if (dados.cargaHorariaOcr)  setField('cargaHoraria',  String(dados.cargaHorariaOcr));
+      if (dados.dataConclusaoOcr) setField('dataConclusao', dados.dataConclusaoOcr);
+    } catch (err) {
+      Alert.alert('OCR indisponível', 'Preencha os campos manualmente.\n\n' + (err.message || ''));
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+  // ────────────────────────────────────────────────────────
+
   const abrirGaleria = async () => {
     if (!(await pedirPermissao('galeria'))) return;
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -172,6 +195,7 @@ export default function NovaSubmissaoScreen() {
       const asset = result.assets[0];
       setArquivo({ uri: asset.uri, name: asset.fileName || `cert_${Date.now()}.jpg`, type: asset.mimeType || 'image/jpeg' });
       setErrors(e => ({ ...e, arquivo: null }));
+      rodarOcr(asset); // ← NOVO
     }
   };
 
@@ -182,6 +206,7 @@ export default function NovaSubmissaoScreen() {
       const asset = result.assets[0];
       setArquivo({ uri: asset.uri, name: `cert_${Date.now()}.jpg`, type: asset.mimeType || 'image/jpeg' });
       setErrors(e => ({ ...e, arquivo: null }));
+      rodarOcr(asset); // ← NOVO
     }
   };
 
@@ -335,6 +360,17 @@ export default function NovaSubmissaoScreen() {
           {/* ── Card 3: Dados do certificado ─── */}
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Dados do Certificado</Text>
+
+            {/* ── Indicador OCR ── NOVO ─────────────────────── */}
+            {ocrLoading && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <ActivityIndicator size="small" color={colors.accent} />
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 8 }}>
+                  Lendo certificado com OCR...
+                </Text>
+              </View>
+            )}
+            {/* ─────────────────────────────────────────────── */}
 
             <FormField label="Nome do aluno" required error={errors.nomeAluno}>
               <TextInput
