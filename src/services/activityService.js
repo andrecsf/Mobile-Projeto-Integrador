@@ -1,15 +1,5 @@
 import api from './api';
 
-/**
- * activityService.js — AcadFlow Mobile
- *
- * Contrato do backend:
- * POST /submissoes  multipart/form-data
- * part "submissao" (JSON):
- * { aluno: { id }, categoria: { id }, curso: { id },
- * certificado: { nomeAlunoOcr, nomeCursoOcr, cargaHorariaOcr, dataConclusaoOcr } | null }
- * part "file": arquivo binário
- */
 
 const ActivityService = {
   // ── CATEGORIAS ──────────────────────────────────────────
@@ -21,10 +11,6 @@ const ActivityService = {
     return api.get(`/categorias?cursoId=${cursoId}`).then(r => r.data);
   },
 
-  // ── CURSOS DO ALUNO ─────────────────────────────────────
-  /**
-   * Consome a nova rota otimizada para trazer apenas os cursos em que o aluno está matriculado.
-   */
   getAluno(alunoId) {
     return api.get(`/alunos/${alunoId}`).then(r => r.data);
   },
@@ -38,9 +24,7 @@ const ActivityService = {
     return api.get(`/submissoes/aluno/${alunoId}`).then(r => r.data);
   },
 
-  /**
-   * Envia um certificado.
-   */
+  
   async inserirSubmissao({ alunoId, categoriaId, cursoId, fileUri, fileName, fileType, dadosOcr = null }) {
     const submissaoObj = {
       aluno:     { id: alunoId },

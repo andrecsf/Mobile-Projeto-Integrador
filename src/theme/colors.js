@@ -12,7 +12,7 @@ export const colors = {
   blue100: '#ddeeff',
   blue50:  '#f0f7ff',
 
-  accent:      '#1a56db',
+  accent:      '#4d8fe8',
   accentHover: '#1648c4',
   accentLight: '#e8f0fe',
 
@@ -24,19 +24,19 @@ export const colors = {
   dangerLight:  '#fee2e2',
 
   // Superfícies
-  bg:        '#0f1117',
-  card:      '#ffffff',
-  inputBg:   '#f5f6fa',
+  bg:        '#1A222D',
+  card:      '#253342',
+  inputBg:   '#2E3E52',
   hover:     '#f0f2fa',
 
   // Textos
-  textPrimary:   '#1c2030',
+  textPrimary:   '#F8FAFC',
   textSecondary: '#5a6079',
   textMuted:     '#a8afc4',
   textInverse:   '#ffffff',
 
   // Bordas
-  border:       '#ebedf5',
+  border:       '#2E3E52',
   borderStrong: '#d1d5e4',
 
   white: '#ffffff',
