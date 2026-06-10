@@ -16,6 +16,8 @@ import authStore from '../store/authStore';
 import ActivityService from '../services/activityService';
 import SubmissaoCard from '../components/SubmissaoCard';
 import CertificadoModal from '../components/CertificadoModal';
+import CursoSelector from '../components/CursoSelector';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 const DONUT_SIZE = 160;
@@ -35,39 +37,47 @@ function DonutChart({ progresso, horasFeitas, horasMeta }) {
   }, [progresso]);
 
   const pct = Math.min(progresso, 1);
-  const graus = pct * 360;
+  const angulo = pct * 2 * Math.PI;
+
+  const cx = DONUT_SIZE / 2;
+  const cy = DONUT_SIZE / 2;
+
+  // Ponto final do arco na circunferência
+  const x = cx + RADIUS * Math.sin(angulo);
+  const y = cy - RADIUS * Math.cos(angulo);
+  const largeArc = pct > 0.5 ? 1 : 0;
+
+  // Path do arco: começa no topo (cx, cy - RADIUS) e vai até (x, y)
+  const d = pct === 0
+    ? ''
+    : pct >= 1
+      ? `M ${cx} ${cy - RADIUS} A ${RADIUS} ${RADIUS} 0 1 1 ${cx - 0.001} ${cy - RADIUS}`
+      : `M ${cx} ${cy - RADIUS} A ${RADIUS} ${RADIUS} 0 ${largeArc} 1 ${x} ${y}`;
 
   return (
     <View style={donutStyles.wrapper}>
-      <View style={donutStyles.track} />
-      <View style={donutStyles.arcContainer}>
-        <View style={[donutStyles.halfCircle, donutStyles.left]}>
-          <View
-            style={[
-              donutStyles.halfCircleInner,
-              donutStyles.leftInner,
-              {
-                transform: [{ rotate: graus > 180 ? '180deg' : `${graus}deg` }],
-                backgroundColor: colors.accent,
-              },
-            ]}
+      <Svg width={DONUT_SIZE} height={DONUT_SIZE}>
+        {/* Track cinza */}
+        <Circle
+          cx={cx}
+          cy={cy}
+          r={RADIUS}
+          fill="none"
+          stroke={colors.accentLight}
+          strokeWidth={STROKE}
+        />
+        {/* Arco de progresso */}
+        {pct > 0 && (
+          <Path
+            d={d}
+            fill="none"
+            stroke={pct >= 1 ? colors.success : colors.accent}
+            strokeWidth={STROKE}
+            strokeLinecap="round"
           />
-        </View>
-        {graus > 180 && (
-          <View style={[donutStyles.halfCircle, donutStyles.right]}>
-            <View
-              style={[
-                donutStyles.halfCircleInner,
-                donutStyles.rightInner,
-                {
-                  transform: [{ rotate: `${graus - 180}deg` }],
-                  backgroundColor: colors.accent,
-                },
-              ]}
-            />
-          </View>
         )}
-      </View>
+      </Svg>
+      {/* Texto central sobreposto */}
       <View style={donutStyles.hole}>
         <Text style={donutStyles.horasFeitas}>{horasFeitas}h</Text>
         <Text style={donutStyles.horasLabel}>de {horasMeta}h</Text>
@@ -83,50 +93,8 @@ const donutStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  track: {
-    position: 'absolute',
-    width: DONUT_SIZE,
-    height: DONUT_SIZE,
-    borderRadius: DONUT_SIZE / 2,
-    borderWidth: STROKE,
-    borderColor: colors.accentLight,
-  },
-  arcContainer: {
-    position: 'absolute',
-    width: DONUT_SIZE,
-    height: DONUT_SIZE,
-  },
-  halfCircle: {
-    position: 'absolute',
-    width: DONUT_SIZE / 2,
-    height: DONUT_SIZE,
-    overflow: 'hidden',
-  },
-  left: { left: 0 },
-  right: { right: 0 },
-  halfCircleInner: {
-    position: 'absolute',
-    width: DONUT_SIZE,
-    height: DONUT_SIZE,
-    borderRadius: DONUT_SIZE / 2,
-    borderWidth: STROKE,
-    borderColor: 'transparent',
-  },
-  leftInner: {
-    left: 0,
-    borderLeftColor: colors.accent,
-    borderBottomColor: colors.accent,
-  },
-  rightInner: {
-    right: 0,
-    borderRightColor: colors.accent,
-    borderTopColor: colors.accent,
-  },
   hole: {
-    width: DONUT_SIZE - STROKE * 2 - 8,
-    height: DONUT_SIZE - STROKE * 2 - 8,
-    borderRadius: (DONUT_SIZE - STROKE * 2 - 8) / 2,
-    backgroundColor: colors.card,
+    position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -253,43 +221,67 @@ const chipStyles = StyleSheet.create({
 });
 
 export default function HomeScreen({ navigation, onLogout }) {
-  const [aluno, setAluno]           = useState(null);
-  const [cursos, setCursos]         = useState([]);
-  const [submissoes, setSubmissoes] = useState([]);
-  const [loading, setLoading]       = useState(true);
+  const [aluno, setAluno]                     = useState(null);
+  const [cursos, setCursos]                   = useState([]);
+  const [cursoAtivo, setCursoAtivo]           = useState(() => authStore.getCursoAtivo());
+  const [submissoes, setSubmissoes]           = useState([]);
+  const [loadingCursos, setLoadingCursos]     = useState(false);
+  const [loadingDados, setLoadingDados]       = useState(true);
   const [certSelecionado, setCertSelecionado] = useState(null);
 
   const user = authStore.getUser();
 
-  const carregar = useCallback(async () => {
+  // ── Carrega cursos uma vez (na montagem) ──────────────────
+  useEffect(() => {
     if (!user?.id) return;
-    setLoading(true);
+    setLoadingCursos(true);
+    ActivityService.getCursosByAluno(user.id)
+      .then(data => {
+        const lista = data || [];
+        setCursos(lista);
+        authStore.inicializarCursoAtivo(lista);
+        setCursoAtivo(authStore.getCursoAtivo());
+      })
+      .catch(e => console.warn('HomeScreen cursos erro:', e.message))
+      .finally(() => setLoadingCursos(false));
+  }, [user?.id]);
+
+  // ── Recarrega aluno + submissões quando o curso ativo muda ─
+  const carregarDados = useCallback(async () => {
+    if (!user?.id || !cursoAtivo?.id) return;
+    setLoadingDados(true);
     try {
-      const [alunoData, cursosData, submissoesData] = await Promise.all([
+      const [alunoData, submissoesData] = await Promise.all([
         ActivityService.getAluno(user.id),
-        ActivityService.getCursosByAluno(user.id),
-        ActivityService.getSubmissoesByAluno(user.id),
+        ActivityService.getSubmissoesByAluno(user.id, cursoAtivo.id),
       ]);
       setAluno(alunoData);
-      setCursos(cursosData || []);
       setSubmissoes(submissoesData || []);
     } catch (e) {
-      console.warn('HomeScreen erro:', e.message);
+      console.warn('HomeScreen dados erro:', e.message);
     } finally {
-      setLoading(false);
+      setLoadingDados(false);
     }
-  }, [user?.id]);
+  }, [user?.id, cursoAtivo?.id]);
 
   useFocusEffect(
     React.useCallback(() => {
-      carregar();
-    }, [carregar])
+      carregarDados();
+    }, [carregarDados])
   );
 
-  const horasFeitas = aluno?.horasAcumuladas ?? 0;
-  const horasMeta   = cursos.length > 0
-    ? Math.max(...cursos.map(c => c.cargaHorariaMax ?? 0))
-    : 120;
+  // ── Troca de curso pelo seletor ───────────────────────────
+  const handleTrocarCurso = (curso) => {
+    authStore.setCursoAtivo(curso);
+    setCursoAtivo(curso);
+  };
+
+  // ── Derivações ────────────────────────────────────────────
+  const cursoDoCursoAtivo = cursos.find(c => c.id === cursoAtivo?.id);
+  const horasFeitas = submissoes
+  .filter(s => (s.status || '').toUpperCase() === 'APROVADO')
+  .reduce((acc, s) => acc + (s.horasAproveitadas ?? 0), 0);
+  const horasMeta   = cursoDoCursoAtivo?.cargaHorariaMax ?? 120;
   const progresso   = horasMeta > 0 ? horasFeitas / horasMeta : 0;
   const pctTexto    = Math.min(Math.round(progresso * 100), 100);
 
@@ -302,12 +294,13 @@ export default function HomeScreen({ navigation, onLogout }) {
     { PENDENTE: 0, APROVADO: 0, REJEITADO: 0 },
   );
 
-  const ultimas3 = submissoes.slice(0, 3);
+  const ultimas3     = submissoes.slice(0, 3);
+  const loading      = loadingDados;
   const primeiroNome = (aluno?.name || user?.email || 'Aluno').split(' ')[0];
-  const hora = new Date().getHours();
-  const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+  const hora         = new Date().getHours();
+  const saudacao     = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
 
-  if (loading) {
+  if (loading && !cursoAtivo) {
     return (
       <View style={styles.safeArea}>
         <View style={styles.loadingContainer}>
@@ -357,86 +350,101 @@ export default function HomeScreen({ navigation, onLogout }) {
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.card, styles.progressoCard]}>
-          <Text style={styles.sectionTitle}>Horas Complementares</Text>
-          <Text style={styles.sectionSubtitle}>
-            {progresso >= 1
-              ? '🎉 Meta atingida! Parabéns!'
-              : `Faltam ${Math.max(horasMeta - horasFeitas, 0)}h para completar`}
-          </Text>
-          <View style={styles.progressoRow}>
-            <DonutChart progresso={progresso} horasFeitas={horasFeitas} horasMeta={horasMeta} />
-            <View style={styles.progressoDetalhes}>
-              <View style={styles.metaItem}>
-                <Text style={styles.metaValor}>{pctTexto}%</Text>
-                <Text style={styles.metaLabel}>concluído</Text>
-              </View>
-              <View style={styles.separador} />
-              <View style={styles.metaItem}>
-                <Text style={styles.metaValor}>{horasMeta}h</Text>
-                <Text style={styles.metaLabel}>meta total</Text>
-              </View>
-              <View style={styles.separador} />
-              <View style={styles.metaItem}>
-                <Text style={[styles.metaValor, { color: colors.success }]}>{contagem.APROVADO}</Text>
-                <Text style={styles.metaLabel}>aprovados</Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.barraContainer}>
-            <View style={styles.barraLabels}>
-              <Text style={styles.barraLabelText}>0h</Text>
-              <Text style={styles.barraLabelText}>{horasMeta}h</Text>
-            </View>
-            <BarraProgresso progresso={progresso} />
-          </View>
-        </View>
+        <CursoSelector
+          cursos={cursos.map(c => ({ id: c.id, nome: c.nome }))}
+          cursoAtivo={cursoAtivo}
+          onChange={handleTrocarCurso}
+          loading={loadingCursos}
+        />
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Resumo de Envios</Text>
-          <View style={styles.chipsRow}>
-            <ChipStatus status="PENDENTE"  count={contagem.PENDENTE}  />
-            <ChipStatus status="APROVADO"  count={contagem.APROVADO}  />
-            <ChipStatus status="REJEITADO" count={contagem.REJEITADO} />
+        {loading ? (
+          <View style={styles.loadingInline}>
+            <ActivityIndicator size="small" color={colors.accent} />
           </View>
-        </View>
-
-        <View style={styles.card}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Últimos Certificados</Text>
-            {submissoes.length > 3 && (
-              <TouchableOpacity onPress={() => navigation.navigate('MinhasSubmissoes')}>
-                <Text style={styles.verTodos}>Ver todos</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          {ultimas3.length === 0 ? (
-            <View style={styles.vazioContainer}>
-              <Text style={styles.vazioIcone}>📂</Text>
-              <Text style={styles.vazioTexto}>Nenhum certificado enviado ainda.</Text>
-              <TouchableOpacity
-                style={styles.btnEnviar}
-                onPress={() => navigation.navigate('NovaSubmissao')}
-              >
-                <Text style={styles.btnEnviarText}>Enviar meu primeiro certificado</Text>
-              </TouchableOpacity>
+        ) : (
+          <>
+            <View style={[styles.card, styles.progressoCard]}>
+              <Text style={styles.sectionTitle}>Horas Complementares</Text>
+              <Text style={styles.sectionSubtitle}>
+                {progresso >= 1
+                  ? '🎉 Meta atingida! Parabéns!'
+                  : `Faltam ${Math.max(horasMeta - horasFeitas, 0)}h para completar`}
+              </Text>
+              <View style={styles.progressoRow}>
+                <DonutChart progresso={progresso} horasFeitas={horasFeitas} horasMeta={horasMeta} />
+                <View style={styles.progressoDetalhes}>
+                  <View style={styles.metaItem}>
+                    <Text style={styles.metaValor}>{pctTexto}%</Text>
+                    <Text style={styles.metaLabel}>concluído</Text>
+                  </View>
+                  <View style={styles.separador} />
+                  <View style={styles.metaItem}>
+                    <Text style={styles.metaValor}>{horasMeta}h</Text>
+                    <Text style={styles.metaLabel}>meta total</Text>
+                  </View>
+                  <View style={styles.separador} />
+                  <View style={styles.metaItem}>
+                    <Text style={[styles.metaValor, { color: colors.success }]}>{contagem.APROVADO}</Text>
+                    <Text style={styles.metaLabel}>aprovados</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.barraContainer}>
+                <View style={styles.barraLabels}>
+                  <Text style={styles.barraLabelText}>0h</Text>
+                  <Text style={styles.barraLabelText}>{horasMeta}h</Text>
+                </View>
+                <BarraProgresso progresso={progresso} />
+              </View>
             </View>
-          ) : (
-            ultimas3.map(item => (
-              <TouchableOpacity key={item.id} onPress={() => setCertSelecionado(item)} activeOpacity={0.8}>
-                <SubmissaoCard
-                  titulo={item.nomeAluno}
-                  horas={item.horasAproveitadas}
-                  categoria={item.nomeCategoria}
-                  status={item.status}
-                  data={item.dataEnvio}
-                  observacao={item.observacaoCoordenador}
-                  curso={item.nomeCurso}
-                />
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
+
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Resumo de Envios</Text>
+              <View style={styles.chipsRow}>
+                <ChipStatus status="PENDENTE"  count={contagem.PENDENTE}  />
+                <ChipStatus status="APROVADO"  count={contagem.APROVADO}  />
+                <ChipStatus status="REJEITADO" count={contagem.REJEITADO} />
+              </View>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Últimos Certificados</Text>
+                {submissoes.length > 3 && (
+                  <TouchableOpacity onPress={() => navigation.navigate('MinhasSubmissoes')}>
+                    <Text style={styles.verTodos}>Ver todos</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              {ultimas3.length === 0 ? (
+                <View style={styles.vazioContainer}>
+                  <Text style={styles.vazioIcone}>📂</Text>
+                  <Text style={styles.vazioTexto}>Nenhum certificado enviado ainda.</Text>
+                  <TouchableOpacity
+                    style={styles.btnEnviar}
+                    onPress={() => navigation.navigate('NovaSubmissao')}
+                  >
+                    <Text style={styles.btnEnviarText}>Enviar meu primeiro certificado</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                ultimas3.map(item => (
+                  <TouchableOpacity key={item.id} onPress={() => setCertSelecionado(item)} activeOpacity={0.8}>
+                    <SubmissaoCard
+                      titulo={item.certificado?.nomeCursoOcr || item.nomeCategoria}
+                      horas={item.horasAproveitadas}
+                      categoria={item.nomeCategoria}
+                      status={item.status}
+                      data={item.dataEnvio}
+                      observacao={item.observacaoCoordenador}
+                      curso={item.nomeCurso}
+                    />
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          </>
+        )}
 
         <CertificadoModal
           certificado={certSelecionado}
@@ -454,6 +462,7 @@ const styles = StyleSheet.create({
   scroll:     { padding: 20 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   loadingText:      { marginTop: 12, color: colors.textSecondary, fontSize: 14 },
+  loadingInline:    { alignItems: 'center', paddingVertical: 40 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet, Text, View, FlatList, TouchableOpacity,
   ActivityIndicator, Alert, Modal, Pressable, ScrollView,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import SubmissaoCard from '../components/SubmissaoCard';
+import CursoSelector from '../components/CursoSelector';
 import { colors, shadows } from '../theme/colors';
-import api from '../services/api';
+import ActivityService from '../services/activityService';
 import authStore from '../store/authStore';
 import CertificadoModal from '../components/CertificadoModal';
 
@@ -72,67 +74,84 @@ function FilterSection({ title, options, value, onChange, metaMap }) {
 }
 
 export default function MinhasSubmissoesScreen({ navigation }) {
-  const [submissoes, setSubmissoes]     = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [submissoes, setSubmissoes]           = useState([]);
+  const [cursos, setCursos]                   = useState([]);
+  const [cursoAtivo, setCursoAtivo]           = useState(() => authStore.getCursoAtivo());
+  const [loading, setLoading]                 = useState(true);
+  const [loadingCursos, setLoadingCursos]     = useState(false);
+  const [modalVisible, setModalVisible]       = useState(false);
   const [certSelecionado, setCertSelecionado] = useState(null);
 
   const [filtroStatus, setFiltroStatus] = useState('Todos');
   const [filtroCat,    setFiltroCat]    = useState('Todas');
-  const [filtroCurso,  setFiltroCurso]  = useState('Todos');
 
   const [draftStatus, setDraftStatus] = useState('Todos');
   const [draftCat,    setDraftCat]    = useState('Todas');
-  const [draftCurso,  setDraftCurso]  = useState('Todos');
 
-  const buscarSubmissoes = async () => {
+  const user = authStore.getUser();
+
+  // ── Carrega cursos uma vez (na montagem) ──────────────────
+  React.useEffect(() => {
+    if (!user?.id) return;
+    setLoadingCursos(true);
+    ActivityService.getCursosByAluno(user.id)
+      .then(data => {
+        const lista = data || [];
+        setCursos(lista);
+        authStore.inicializarCursoAtivo(lista);
+        setCursoAtivo(authStore.getCursoAtivo());
+      })
+      .catch(e => console.warn('MinhasSubmissoes cursos erro:', e.message))
+      .finally(() => setLoadingCursos(false));
+  }, [user?.id]);
+
+  // ── Busca submissões do curso ativo ───────────────────────
+  const buscarSubmissoes = useCallback(async () => {
+    if (!user?.id || !cursoAtivo?.id) return;
     try {
       setLoading(true);
-      const user    = authStore.getUser();
-      const alunoId = user?.id;
-      if (!alunoId) {
-        Alert.alert('Sessão inválida', 'Faça login novamente.');
-        return;
-      }
-      const response = await api.get(`/submissoes/aluno/${alunoId}`);
-      setSubmissoes(response.data);
+      const data = await ActivityService.getSubmissoesByAluno(user.id, cursoAtivo.id);
+      setSubmissoes(data || []);
+      // Reseta filtro de categoria ao trocar de curso
+      setFiltroCat('Todas');
+      setDraftCat('Todas');
     } catch {
       Alert.alert('Erro de Conexão', 'Não foi possível carregar as submissões.');
     } finally {
       setLoading(false);
     }
+  }, [user?.id, cursoAtivo?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      buscarSubmissoes();
+    }, [buscarSubmissoes])
+  );
+
+  // ── Troca de curso ────────────────────────────────────────
+  const handleTrocarCurso = (curso) => {
+    authStore.setCursoAtivo(curso);
+    setCursoAtivo(curso);
   };
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', buscarSubmissoes);
-    return unsubscribe;
-  }, [navigation]);
-
+  // ── Filtros locais (status + categoria) ──────────────────
   const categorias = useMemo(() => {
     const set = new Set(submissoes.map(s => s.nomeCategoria).filter(Boolean));
     return ['Todas', ...Array.from(set)];
   }, [submissoes]);
 
-  const cursos = useMemo(() => {
-    const set = new Set(submissoes.map(s => s.nomeCurso).filter(Boolean));
-    return ['Todos', ...Array.from(set)];
-  }, [submissoes]);
-
   const filtradas = useMemo(() => submissoes.filter(s => {
     const okStatus = filtroStatus === 'Todos' || (s.status || '').toUpperCase() === filtroStatus;
     const okCat    = filtroCat   === 'Todas'  || s.nomeCategoria === filtroCat;
-    const okCurso  = filtroCurso === 'Todos'  || s.nomeCurso     === filtroCurso;
-    return okStatus && okCat && okCurso;
-  }), [submissoes, filtroStatus, filtroCat, filtroCurso]);
+    return okStatus && okCat;
+  }), [submissoes, filtroStatus, filtroCat]);
 
   const totalFiltros = (filtroStatus !== 'Todos' ? 1 : 0) +
-                       (filtroCat    !== 'Todas'  ? 1 : 0) +
-                       (filtroCurso  !== 'Todos'  ? 1 : 0);
+                       (filtroCat    !== 'Todas'  ? 1 : 0);
 
   const openModal = () => {
     setDraftStatus(filtroStatus);
     setDraftCat(filtroCat);
-    setDraftCurso(filtroCurso);
     setModalVisible(true);
   };
 
@@ -141,14 +160,12 @@ export default function MinhasSubmissoesScreen({ navigation }) {
   const applyFilters = () => {
     setFiltroStatus(draftStatus);
     setFiltroCat(draftCat);
-    setFiltroCurso(draftCurso);
     setModalVisible(false);
   };
 
   const clearAll = () => {
     setDraftStatus('Todos');
     setDraftCat('Todas');
-    setDraftCurso('Todos');
   };
 
   const ListToolbar = () => (
@@ -169,11 +186,6 @@ export default function MinhasSubmissoesScreen({ navigation }) {
             <Text style={styles.activeTagText}>📂</Text>
           </View>
         )}
-        {filtroCurso !== 'Todos' && (
-          <View style={styles.activeTag}>
-            <Text style={styles.activeTagText}>🎓</Text>
-          </View>
-        )}
         <TouchableOpacity onPress={openModal} style={[styles.filterBtn, totalFiltros > 0 && styles.filterBtnActive]}>
           <FilterIcon color={totalFiltros > 0 ? colors.accent : colors.textSecondary} size={16} />
           {totalFiltros > 0 && (
@@ -192,6 +204,12 @@ export default function MinhasSubmissoesScreen({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.title}>Minhas Submissões</Text>
         <Text style={styles.subtitle}>Acompanhe o status dos seus certificados</Text>
+        <CursoSelector
+          cursos={cursos.map(c => ({ id: c.id, nome: c.nome }))}
+          cursoAtivo={cursoAtivo}
+          onChange={handleTrocarCurso}
+          loading={loadingCursos}
+        />
       </View>
 
       {loading ? (
@@ -208,7 +226,7 @@ export default function MinhasSubmissoesScreen({ navigation }) {
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => setCertSelecionado(item)} activeOpacity={0.8}>
               <SubmissaoCard
-                titulo={item.nomeAluno}
+                titulo={item.certificado?.nomeCursoOcr || item.nomeCategoria}
                 horas={item.horasAproveitadas}
                 categoria={item.nomeCategoria}
                 status={item.status}
@@ -221,7 +239,7 @@ export default function MinhasSubmissoesScreen({ navigation }) {
           ListEmptyComponent={
             <Text style={styles.emptyText}>
               {submissoes.length === 0
-                ? 'Nenhum certificado submetido ainda.'
+                ? 'Nenhum certificado enviado neste curso.'
                 : 'Nenhuma submissão com esses filtros.'}
             </Text>
           }
@@ -265,14 +283,6 @@ export default function MinhasSubmissoesScreen({ navigation }) {
                 onChange={setDraftCat}
               />
             )}
-            {cursos.length > 1 && (
-              <FilterSection
-                title="Curso"
-                options={cursos}
-                value={draftCurso}
-                onChange={setDraftCurso}
-              />
-            )}
           </ScrollView>
 
           <TouchableOpacity style={mStyles.applyBtn} onPress={applyFilters} activeOpacity={0.85}>
@@ -281,7 +291,7 @@ export default function MinhasSubmissoesScreen({ navigation }) {
         </View>
       </Modal>
 
-      <CertificadoModal                          
+      <CertificadoModal
         certificado={certSelecionado}
         onClose={() => setCertSelecionado(null)}
       />
@@ -294,12 +304,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: {
     padding: 20,
-    borderBottomWidth: 0,
-    
+    paddingBottom: 4,
     backgroundColor: colors.bg,
   },
   title:    { fontSize: 24, fontWeight: '800', color: '#ffffff', letterSpacing: -0.5 },
-  subtitle: { fontSize: 14, color: '#ffffff', marginTop: 4, opacity: 0.7 },
+  subtitle: { fontSize: 14, color: '#ffffff', marginTop: 4, opacity: 0.7, marginBottom: 16 },
 
   toolbar: {
     flexDirection: 'row',
@@ -312,7 +321,7 @@ const styles = StyleSheet.create({
   filterBtn: {
     width: 38, height: 38, borderRadius: 10,
     backgroundColor: colors.bg,
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
     ...shadows.sm,
   },
@@ -375,7 +384,7 @@ const mStyles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 12, paddingHorizontal: 14,
     borderRadius: 14, borderWidth: 1.5,
-     marginBottom: 8,
+    marginBottom: 8,
     backgroundColor: colors.inputBg, gap: 10,
   },
   emoji:       { fontSize: 16 },

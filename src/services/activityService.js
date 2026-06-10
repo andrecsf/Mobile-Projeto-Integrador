@@ -20,8 +20,11 @@ const ActivityService = {
   },
 
   // ── SUBMISSÕES ──────────────────────────────────────────
-  getSubmissoesByAluno(alunoId) {
-    return api.get(`/submissoes/aluno/${alunoId}`).then(r => r.data);
+  getSubmissoesByAluno(alunoId, cursoId = null) {
+    const url = cursoId
+      ? `/submissoes/aluno/${alunoId}?cursoId=${cursoId}`
+      : `/submissoes/aluno/${alunoId}`;
+    return api.get(url).then(r => r.data);
   },
 
   
